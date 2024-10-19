@@ -16,7 +16,6 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 app.config['SECRET_KEY'] = 'any-secret-key-you-choose'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 #  building login manager
@@ -31,7 +30,6 @@ class User(UserMixin, db.Model):
     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(100), nullable=False)
     name: Mapped[str] = mapped_column(String(1000), nullable=False)
-
 
 
 with app.app_context():
@@ -52,7 +50,7 @@ def register():
         hashed_password = werkzeug.security.generate_password_hash(password=password, method="pbkdf2", salt_length=8)
         user = User.query.filter_by(email=email).first()
         if user:
-            flash("User already exists.","error")
+            flash("User already exists.", "error")
             return redirect(url_for("register"))
         new_user = User(
             name=name,
@@ -65,11 +63,13 @@ def register():
         return render_template("secrets.html", name=name)
     return render_template("register.html")
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-@app.route('/login',methods=["POST","GET"])
+
+@app.route('/login', methods=["POST", "GET"])
 def login():
     email = request.form.get("email")
     password = request.form.get("password")
@@ -82,16 +82,19 @@ def login():
             if password == hashed_pass:
                 return redirect(url_for("secrets"))
             else:
-                flash("invalid password","error")
+                flash("invalid password", "error")
                 return redirect(url_for("login"))
         else:
             flash("This email is not registered")
             return redirect(url_for("login"))
     return render_template("login.html")
 
+
 @app.context_processor
 def inject_logged_in():
     return dict(logged_in=current_user.is_authenticated)
+
+
 @app.route('/secrets')
 @login_required
 def secrets():
